@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Files from './pages/Files'
 import Scheduler from './pages/Scheduler'
+import Documentation from './pages/Documentation'
 
 function isTokenValid(): boolean {
   const token = localStorage.getItem('datapilot_token')
@@ -42,6 +43,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="files" element={<Files />} />
             <Route path="scheduler" element={<Scheduler />} />
+            <Route path="documentation" element={<Documentation />} />
           </Route>
         </Routes>
       </BrowserRouter>

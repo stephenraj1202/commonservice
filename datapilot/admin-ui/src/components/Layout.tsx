@@ -5,6 +5,7 @@ import {
   FileOutlined,
   ScheduleOutlined,
   LogoutOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth'
 
@@ -14,6 +15,7 @@ const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/files', icon: <FileOutlined />, label: 'Files' },
   { key: '/scheduler', icon: <ScheduleOutlined />, label: 'Scheduler' },
+  { key: '/documentation', icon: <FileTextOutlined />, label: 'Documentation' },
 ]
 
 export default function Layout() {
