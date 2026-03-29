@@ -20,6 +20,8 @@ interface FileTableProps {
   loading: boolean
   onPageChange: (page: number, limit: number) => void
   onDelete: (id: number) => Promise<void>
+  selectedIds: Set<number>
+  onToggleSelect: (id: number) => void
 }
 
 export default function FileTable({
@@ -30,6 +32,8 @@ export default function FileTable({
   loading,
   onPageChange,
   onDelete,
+  selectedIds,
+  onToggleSelect,
 }: FileTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -106,6 +110,21 @@ export default function FileTable({
         columns={columns}
         dataSource={files}
         loading={loading}
+        rowSelection={{
+          selectedRowKeys: Array.from(selectedIds),
+          onChange: (selectedRowKeys) => {
+            selectedRowKeys.forEach(key => {
+              if (!selectedIds.has(key as number)) {
+                onToggleSelect(key as number)
+              }
+            })
+            selectedIds.forEach(id => {
+              if (!selectedRowKeys.includes(id)) {
+                onToggleSelect(id)
+              }
+            })
+          },
+        }}
         pagination={{
           current: page,
           pageSize: limit,
