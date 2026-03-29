@@ -29,13 +29,13 @@ export default function UploadForm({ onSuccess }: UploadFormProps) {
       <Upload.Dragger
         customRequest={handleUpload}
         showUploadList={false}
-        multiple={false}
+        multiple={true}
       >
         <p className="ant-upload-drag-icon">
           <InboxOutlined />
         </p>
-        <p className="ant-upload-text">Click or drag a file here to upload</p>
-        <p className="ant-upload-hint">Supports any file type up to 100 MB</p>
+        <p className="ant-upload-text">Click or drag files here to upload</p>
+        <p className="ant-upload-hint">Supports multiple files, any type up to 100 MB each</p>
       </Upload.Dragger>
       {progress !== null && (
         <Progress percent={progress} style={{ marginTop: 12 }} />
