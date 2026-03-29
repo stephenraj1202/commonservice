@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, Progress, message } from 'antd'
+import { Upload, Progress, message, Space } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import type { UploadRequestOption } from 'rc-upload/lib/interface'
 import { uploadFile, type FileRecord } from '../api/files'
@@ -8,19 +8,35 @@ interface UploadFormProps {
   onSuccess: (file: FileRecord) => void
 }
 
+interface FileProgress {
+  name: string
+  progress: number
+}
+
 export default function UploadForm({ onSuccess }: UploadFormProps) {
-  const [progress, setProgress] = useState<number | null>(null)
+  const [uploads, setUploads] = useState<Map<string, FileProgress>>(new Map())
 
   async function handleUpload({ file }: UploadRequestOption) {
-    setProgress(0)
+    const fileName = (file as File).name
+    
+    setUploads(prev => new Map(prev).set(fileName, { name: fileName, progress: 0 }))
+    
     try {
-      const record = await uploadFile(file as File, (pct) => setProgress(pct))
-      message.success(`${(file as File).name} uploaded successfully`)
+      const record = await uploadFile(file as File, (pct) => {
+        setUploads(prev => new Map(prev).set(fileName, { name: fileName, progress: pct }))
+      })
+      message.success(`${fileName} uploaded successfully`)
       onSuccess(record)
     } catch {
-      message.error(`Failed to upload ${(file as File).name}`)
+      message.error(`Failed to upload ${fileName}`)
     } finally {
-      setProgress(null)
+      setTimeout(() => {
+        setUploads(prev => {
+          const next = new Map(prev)
+          next.delete(fileName)
+          return next
+        })
+      }, 2000)
     }
   }
 
@@ -37,8 +53,17 @@ export default function UploadForm({ onSuccess }: UploadFormProps) {
         <p className="ant-upload-text">Click or drag files here to upload</p>
         <p className="ant-upload-hint">Supports multiple files, any type up to 100 MB each</p>
       </Upload.Dragger>
-      {progress !== null && (
-        <Progress percent={progress} style={{ marginTop: 12 }} />
+      {uploads.size > 0 && (
+        <Space direction="vertical" style={{ width: '100%', marginTop: 12 }}>
+          {Array.from(uploads.values()).map((upload) => (
+            <div key={upload.name}>
+              <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                {upload.name}
+              </div>
+              <Progress percent={upload.progress} />
+            </div>
+          ))}
+        </Space>
       )}
     </div>
   )
