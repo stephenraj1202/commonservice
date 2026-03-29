@@ -1,0 +1,21 @@
+include:
+  - docker-compose.yml
+
+services:
+  test-runner:
+    image: golang:1.22-alpine
+    working_dir: /integration
+    volumes:
+      - ./integration:/integration
+    environment:
+      GATEWAY_URL: http://gateway:8080
+      CGO_ENABLED: "0"
+    command: >
+      sh -c "go test -v -timeout 120s ./..."
+    depends_on:
+      gateway:
+        condition: service_healthy
+      file-service:
+        condition: service_healthy
+      scheduler-service:
+        condition: service_healthy

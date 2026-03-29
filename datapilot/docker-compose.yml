@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: datapilot_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVICE_NAME: gateway
+      HTTP_PORT: "8080"
+      MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/datapilot_db?charset=utf8mb4&parseTime=True&loc=Local"
+      FILE_SERVICE_URL: http://file-service:8081
+      SCHEDULER_SERVICE_URL: http://scheduler-service:8082
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      LOG_LEVEL: info
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  file-service:
+    build: ./file-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVICE_NAME: file-service
+      HTTP_PORT: "8081"
+      MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/datapilot_db?charset=utf8mb4&parseTime=True&loc=Local"
+      FILE_STORAGE_PATH: /data/files
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    volumes:
+      - file_storage:/data/files
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  scheduler-service:
+    build: ./scheduler-service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVICE_NAME: scheduler-service
+      HTTP_PORT: "8082"
+      MYSQL_DSN: "root:${MYSQL_ROOT_PASSWORD}@tcp(mysql:3306)/datapilot_db?charset=utf8mb4&parseTime=True&loc=Local"
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  admin-ui:
+    build: ./admin-ui
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+
+volumes:
+  mysql_data:
+  file_storage:
