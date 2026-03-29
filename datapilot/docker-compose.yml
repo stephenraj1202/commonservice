@@ -68,10 +68,10 @@ services:
     build:
       context: .
       dockerfile: ./admin-ui/Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://commonservice.datapilot.co.in
     ports:
       - "3000:80"
-    environment:
-      VITE_API_BASE_URL: http://localhost:8080
 
 volumes:
   file_storage:

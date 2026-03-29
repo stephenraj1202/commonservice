@@ -47,15 +47,23 @@ func main() {
 	}
 
 	// File Service proxy — JWT required.
+	r.GET("/api/v1/files",
+		middleware.JWTAuth(cfg.JWTSecret),
+		proxy.NewProxyWithPrefix(cfg.FileServiceURL, "/files"),
+	)
 	r.Any("/api/v1/files/*path",
 		middleware.JWTAuth(cfg.JWTSecret),
-		proxy.NewProxy(cfg.FileServiceURL),
+		proxy.NewProxyWithPrefix(cfg.FileServiceURL, "/files"),
 	)
 
 	// Scheduler Service proxy — JWT required.
+	r.GET("/api/v1/scheduler",
+		middleware.JWTAuth(cfg.JWTSecret),
+		proxy.NewProxyWithPrefix(cfg.SchedulerServiceURL, "/scheduler"),
+	)
 	r.Any("/api/v1/scheduler/*path",
 		middleware.JWTAuth(cfg.JWTSecret),
-		proxy.NewProxy(cfg.SchedulerServiceURL),
+		proxy.NewProxyWithPrefix(cfg.SchedulerServiceURL, "/scheduler"),
 	)
 
 	log.Info("starting API gateway", zap.String("port", cfg.HTTPPort))

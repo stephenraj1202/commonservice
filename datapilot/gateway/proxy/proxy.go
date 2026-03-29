@@ -8,6 +8,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// NewProxyWithPrefix returns a Gin handler that reverse-proxies requests to target
+// with the specified prefix prepended to the path.
+func NewProxyWithPrefix(target, prefix string) gin.HandlerFunc {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		panic("proxy: invalid target URL: " + err.Error())
+	}
+
+	return func(c *gin.Context) {
+		upstreamPath := c.Param("path")
+		if upstreamPath == "" || upstreamPath == "/" {
+			upstreamPath = ""
+		}
+
+		// Prepend the prefix
+		upstreamURL := *targetURL
+		upstreamURL.Path = prefix + upstreamPath
+		upstreamURL.RawQuery = c.Request.URL.RawQuery
+
+		outReq := c.Request.Clone(c.Request.Context())
+		outReq.URL = &upstreamURL
+		outReq.Host = targetURL.Host
+		outReq.RequestURI = ""
+
+		rp := &httputil.ReverseProxy{
+			Director: func(req *http.Request) {},
+		}
+
+		rp.ServeHTTP(c.Writer, outReq)
+	}
+}
+
 // NewProxy returns a Gin handler that reverse-proxies requests to target.
 // The path forwarded to the upstream is taken from the Gin wildcard param
 // "*path", so the gateway prefix is automatically stripped.
